@@ -36,7 +36,7 @@
 
 extern char console_getc(void);
 extern void console_putc(const char c);
-extern int print(const char *fmt, ...);
+extern int printk(const char *fmt, ...);
 
 #endif
 

@@ -179,7 +179,7 @@ loop:
 	return count;
 }
 
-int print(const char *fmt, ...)
+int printk(const char *fmt, ...)
 {
 	int count;
 	va_list va;

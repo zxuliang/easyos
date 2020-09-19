@@ -1,6 +1,6 @@
 #include <easyos.h>
 
-.global demo_entry
+.extern demo_entry
 
 .text
 .align  2
@@ -12,7 +12,6 @@
 .type   sys_start, %function
 
 sys_start:
-	ldr sp, =__svc_stack_top__
-	
+	ldr	sp, =__svc_stack_top__
 	bl	main_entry
-	b .
+	b	.

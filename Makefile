@@ -23,7 +23,9 @@ INCLUDES := -Iinc
 SRCS := src/start.S src/main.c
 SRCS += src/console.c src/print.c
 
-
+#
+# objfiles
+#
 OBJS :=$(patsubst %.c, out/%.o, $(filter %.c,$(SRCS)))
 OBJS +=$(patsubst %.S, out/%.o, $(filter %.S,$(SRCS)))
 OBJS +=$(patsubst %.S, out/%.o, $(filter %.s,$(SRCS)))
@@ -52,7 +54,7 @@ debug:$(TARGET)
 
 out/%.elf: $(OBJS)
 	@echo ""
-	@echo "CC -Wl,--start-group ${OBJS} -Wl,--end-group $(LDFLAGS) -o $@"
+	@echo "linking $@"
 	@$(CC) -Wl,--start-group $(OBJS) -Wl,--end-group $(LDFLAGS) -o $@
 	@$(OBJCOPY) --gap-fill=0xff -O binary -j.text -j.data -S $@ $(subst .elf,.bin,$@)
 	@$(OBJCOPY) --gap-fill=0xff -O ihex -j.text -j.data -S $@ $(subst .elf,.hex,$@)
