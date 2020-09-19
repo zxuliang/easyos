@@ -1,6 +1,7 @@
 #include <easyos.h>
 
-.extern demo_entry
+.extern main_entry
+.extern dummy_show
 
 .text
 .align  2
@@ -13,5 +14,8 @@
 
 sys_start:
 	ldr	sp, =__svc_stack_top__
+	ldr	r0, = . + 12 	/* jump to main_entry */
+	mov	pc, r0
+	bl	dummy_show
 	bl	main_entry
 	b	.
