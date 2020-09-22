@@ -22,6 +22,7 @@ LDFLAGS	:= -nostartfiles -nostdlib -Wl,--gc-sections -Bstatic -Teasyos.lds -Wl,-
 INCLUDES := -Iinc
 SRCS := src/start.S src/main.c
 SRCS += src/console.c src/print.c
+SRCS += src/sum.S
 
 #
 # objfiles
