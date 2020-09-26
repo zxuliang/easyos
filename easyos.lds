@@ -2,40 +2,17 @@ OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 SEARCH_DIR(.)
 
-ENTRY(sys_start)
-
+ENTRY(reset_handler)
 SECTIONS
 {
 	. = 0x10000;
-
-	.text :
-	{
-		KEEP(*(.isr_vector))
-		*(.text*)
-	}
-
-	.data :
-	{
-		. = ALIGN(4);
-		__data_start__ = .;
-		*(vtable)
-		*(.data*)
-		. = ALIGN(4);
-		__data_end__ = .;
-	}
-
-	.bss (NOLOAD):
-	{
-		. = ALIGN(4);
-		__bss_start__ = .;
-		*(.bss*)
-		*(COMMON)
-		. = ALIGN(4);
-		__bss_end__ = .;
-	}
+	.text : { *(.text) }
+	.data : { *(.data) }
+	.bss : { *(.bss) }
 
 	. = ALIGN(8);
-
-	. = . + 0x1000;
-	__svc_stack_top__ = .;
+	. = . + 0x1000; 			/* 4kB of SVC stack space */
+	svc_stack_top = .;
+	. = . + 0x1000; 			/* 4kB of IRQ stack space */
+	irq_stack_top = .;
 }

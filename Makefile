@@ -10,26 +10,26 @@ OBJCOPY := $(CROSS_COMPILE)objcopy
 ARCH_FLAGS	:= -march=armv5tej -marm -mlittle-endian
 CMN_FLAGS	:= -fno-common -ffunction-sections -fdata-sections
 CMN_FLAGS	+= --specs=nano.specs --specs=nosys.specs
-CMN_FLAGS	+= -fomit-frame-pointer -fno-common -fno-builtin
+CMN_FLAGS	+= -fomit-frame-pointer -fno-common -fno-builtin -Wall -O0 -g
 
 AFLAGS	:= $(CMN_FLAGS) $(ARCH_FLAGS) -D__ASM__
-CFLAGS	:= $(CMN_FLAGS) $(ARCH_FLAGS) -std=gnu99 -Wall -O0 -g
-LDFLAGS	:= -nostartfiles -nostdlib -Wl,--gc-sections -Bstatic -Teasyos.lds -Wl,-lgcc
+CFLAGS	:= $(CMN_FLAGS) $(ARCH_FLAGS) -std=gnu99
+LDFLAGS	:=  -Wl,--gc-sections -Wl,-lgcc -nostartfiles -nostdlib -Bstatic -Teasyos.lds
 
 #
 # srcfiles or includes for build
 #
 INCLUDES := -Iinc
-SRCS := src/start.S src/main.c
-SRCS += src/console.c src/print.c
-SRCS += src/sum.S
+SRCS := src/plat/start.S src/plat/introps.S
+SRCS += $(wildcard src/plat/*.c)
+SRCS += $(wildcard src/os/*.c)
+SRCS += $(wildcard src/os/*.S)
 
 #
 # objfiles
 #
 OBJS :=$(patsubst %.c, out/%.o, $(filter %.c,$(SRCS)))
 OBJS +=$(patsubst %.S, out/%.o, $(filter %.S,$(SRCS)))
-OBJS +=$(patsubst %.S, out/%.o, $(filter %.s,$(SRCS)))
 DEPS :=$(OBJS:.o=.d)
 
 ####
@@ -50,12 +50,12 @@ all: $(TARGET)
 
 run: $(TARGET)
 	qemu-system-arm -M versatilepb -m 128M -kernel $< -nographic -serial mon:stdio
-debug:$(TARGET)
+debug: $(TARGET)
 	qemu-system-arm -M versatilepb -m 128M -kernel $< -nographic -serial mon:stdio -S -s
 
-out/%.elf: $(OBJS)
+$(TARGET): $(OBJS)
 	@echo ""
-	@echo "linking $@"
+	@echo "CC -Wl,--start-group ${OBJS} -Wl,--end-group $(LDFLAGS) -o $@"
 	@$(CC) -Wl,--start-group $(OBJS) -Wl,--end-group $(LDFLAGS) -o $@
 	@$(OBJCOPY) --gap-fill=0xff -O binary -j.text -j.data -S $@ $(subst .elf,.bin,$@)
 	@$(OBJCOPY) --gap-fill=0xff -O ihex -j.text -j.data -S $@ $(subst .elf,.hex,$@)
