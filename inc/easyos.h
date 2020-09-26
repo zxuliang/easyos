@@ -11,9 +11,6 @@
 * context-relate-type-two: {R0-R12,LR,PC,CPSR,SPSR}
 */
 
-
-
-
 #define NO_IRQ_MASK		(0x80)
 #define NO_FIQ_MASK		(0x40)
 #define NO_INTRPT_MASK 	(0xC0)

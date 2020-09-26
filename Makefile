@@ -20,7 +20,7 @@ LDFLAGS	:=  -Wl,--gc-sections -Wl,-lgcc -nostartfiles -nostdlib -Bstatic -Teasyo
 # srcfiles or includes for build
 #
 INCLUDES := -Iinc
-SRCS := src/plat/start.S src/plat/introps.S
+SRCS := $(wildcard src/plat/*.S)
 SRCS += $(wildcard src/plat/*.c)
 SRCS += $(wildcard src/os/*.c)
 SRCS += $(wildcard src/os/*.S)
