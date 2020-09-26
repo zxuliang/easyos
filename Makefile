@@ -13,7 +13,7 @@ CMN_FLAGS	+= --specs=nano.specs --specs=nosys.specs
 CMN_FLAGS	+= -fomit-frame-pointer -fno-common -fno-builtin -Wall -O0 -g
 
 AFLAGS	:= $(CMN_FLAGS) $(ARCH_FLAGS) -D__ASM__
-CFLAGS	:= $(CMN_FLAGS) $(ARCH_FLAGS) -std=gnu99
+CFLAGS	:= $(CMN_FLAGS) $(ARCH_FLAGS) -std=gnu99 -fno-builtin
 LDFLAGS	:=  -Wl,--gc-sections -Wl,-lgcc -nostartfiles -nostdlib -Bstatic -Teasyos.lds
 
 #

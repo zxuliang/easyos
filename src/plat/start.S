@@ -5,15 +5,16 @@
 
 .extern vectors_start
 .extern vectors_end
+.extern demo_thread_app
 
 .global reset_handler
 reset_handler:
-	ldr sp, =svc_stack_top
-	bl relocate_vectors
-	msr cpsr, #(IRQ_MODE|NO_INTRPT_MASK)
-	ldr sp, =irq_stack_top
-	msr cpsr, #SVC_MODE
-	bl main
+	ldr	sp, =svc_stack_top
+	bl	relocate_vectors
+	msr	cpsr, #(IRQ_MODE|NO_INTRPT_MASK)
+	ldr	sp, =irq_stack_top
+	msr	cpsr, #SVC_MODE
+	bl	demo_thread_app	
 	b .
 
 .global relocate_vectors

@@ -32,8 +32,6 @@ irq_disable:
 	msr cpsr, r0
 	bx lr
 
-
-
 /*---------------------isr-vector---------------------------*/
 .extern do_irq_handle_ops
 .global irq_handler

@@ -7,7 +7,6 @@
 
 
 /*
-* Context-related-type-one:  {R0-R12,LR}  If system has no os
 * context-relate-type-two: {R0-R12,LR,PC,CPSR,SPSR}
 */
 
@@ -98,11 +97,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define __used			__attribute__((used))
-#define __unused		__attribute__((unused))
-#define __section(x)	__attribute__((section(x)))
-#define __weak			__attribute__((weak))
-#define ALIGN(n)		__attribute__((aligned(n)))
+#define __USED		__attribute__((used))
+#define __UNUSED	__attribute__((unused))
+#define __SECTION(x)	__attribute__((section(x)))
+#define __WEAK		__attribute__((weak))
+
+#define ALIGN(n)	__attribute__((aligned(n)))
+#define ALIGN_SIZE(n, align) ((n + align - 1) & ~(align - 1))
+#define ALIGN_DOWN(n, align) ( n & ~(align - 1))
 
 typedef int32_t		s32;
 typedef int16_t		s16;
@@ -110,6 +112,7 @@ typedef int8_t		s8;
 typedef uint32_t	u32;
 typedef uint16_t	u16;
 typedef uint8_t		u8;
+typedef unsigned long ulong;
 
 extern void printk(const char *fmt, ...);
 
@@ -147,6 +150,7 @@ extern void bsp_timer_app_init(void);
 #define setbitsl(p, mask)	writel((p),(readl(p) | (mask)))
 #define clrbitsl(p, mask)	writel((p),(readl(p) & ~(mask)))
 
+/*-----------------------irq------------------------------*/
 typedef void (*irq_handler_t)(void *);
 struct irq_manager_st {
 	uint32_t irq;
@@ -158,20 +162,20 @@ struct irq_manager_st {
 void request_irq(uint32_t irq, uint32_t type, irq_handler_t handler,
 					 void *data, const char *name);
 
-
-
 /*---------------------------------------------------------------------------*/
-
+#define TASK_NAME_SIZE (15)
 struct task {
 	void *tsp;
 	void *args;
-	void *stack;
-	uint32_t stksz;
+	void *stack_base;
+	uint32_t stack_size;
+	char name[TASK_NAME_SIZE + 1];
 	void (*entry)(void *args);
 };
 
-struct task *mos_task_init(struct task *taskobj,
-	void (*task_handler)(void *), void *stkbase, uint32_t stksz, const char *name);
+int mx_task_init(struct task *taskobj,
+	void (*entry_func)(void *args), void *args, void *stkbase, 
+	uint32_t stksz, const char *name);
 
 #endif
 
