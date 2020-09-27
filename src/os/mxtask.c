@@ -2,9 +2,8 @@
 
 extern void mxos_start(void);
 
-struct task demo_thread;
-static uint32_t demo_stack[128];
-struct task *current = &demo_thread;
+
+
 
 char *strncpy(char *dest, const char *src, size_t n)
 {
@@ -33,8 +32,13 @@ int mx_task_init(struct task *taskobj, void (*entry_func)(void *),
 	ulong stktop = (ulong)stkbase + stksz;
 
 	stktop = ALIGN_DOWN(stktop, sizeof(ulong));
+	stktop -= sizeof(ulong);
 	memset(taskobj, 0, sizeof(*taskobj));
 	memset(stkbase, 0, stksz);
+
+	printk("stkbase = 0x%x \n", stkbase);
+	printk("stktop_x = 0x%x \n", (ulong)stkbase + stksz);
+	printk("stktop_y = 0x%x \n", stktop);
 
 	strncpy(taskobj->name, name, TASK_NAME_SIZE);
 	taskobj->stack_base = stkbase;
@@ -66,19 +70,41 @@ int mx_task_init(struct task *taskobj, void (*entry_func)(void *),
 	return 0;
 }
 
+
+
+
+struct task demo_thread, hello_thread;
+static uint32_t demo_stack[128];
+static uint32_t hello_stack[128];
+struct task *current = &demo_thread;
+
+void mxos_switch(void);
+
+void mxos_find_next(void)
+{
+	current=current->next;
+}
+
 void demo_thread_func(void *args)
 {
 	uint32_t data = (uint32_t)args;
 
 	while (1) {
 		printk("This is %s with data 0x%x \n", current->name, data);
+		mxos_switch();
 	}
 }
 
 void demo_thread_app(void)
 {
 	mx_task_init(&demo_thread, demo_thread_func, (void *)0x1234, 
-		demo_stack, 128 * sizeof(uint32_t), "demo_thread");
+		demo_stack, 128 * sizeof(uint32_t), "demo");
+
+	mx_task_init(&hello_thread, demo_thread_func, (void *)0x5678, 
+		hello_stack, 128 * sizeof(uint32_t), "hello");
+
+	demo_thread.next = &hello_thread;
+	hello_thread.next = &demo_thread;
 
 	mxos_start();
 }

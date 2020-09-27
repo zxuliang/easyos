@@ -171,6 +171,7 @@ struct task {
 	uint32_t stack_size;
 	char name[TASK_NAME_SIZE + 1];
 	void (*entry)(void *args);
+	struct task *next;
 };
 
 int mx_task_init(struct task *taskobj,
