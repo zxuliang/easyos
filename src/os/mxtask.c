@@ -70,9 +70,6 @@ int mx_task_init(struct task *taskobj, void (*entry_func)(void *),
 	return 0;
 }
 
-
-
-
 struct task demo_thread, hello_thread;
 static uint32_t demo_stack[128];
 static uint32_t hello_stack[128];
@@ -87,11 +84,14 @@ void mxos_find_next(void)
 
 void demo_thread_func(void *args)
 {
+	uint32_t flags = 0;
 	uint32_t data = (uint32_t)args;
 
 	while (1) {
-		printk("This is %s with data 0x%x \n", current->name, data);
+		printk("%s with 0x%x \n", current->name, data);
+		flags = irq_lock_save();
 		mxos_switch();
+		irq_unlock_restore(flags);
 	}
 }
 
@@ -105,6 +105,8 @@ void demo_thread_app(void)
 
 	demo_thread.next = &hello_thread;
 	hello_thread.next = &demo_thread;
+
+	bsp_timer_app_init();
 
 	mxos_start();
 }

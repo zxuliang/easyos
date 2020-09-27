@@ -34,5 +34,6 @@ mxos_switch:
 	ldmfd	sp!,{r0}
 	msr	spsr, r0
 	ldmfd	sp!,{r0}
+	msr	cpsr, r0
 	ldmfd	sp!,{r0-r12, lr}
 	ldmfd	sp!,{pc}
