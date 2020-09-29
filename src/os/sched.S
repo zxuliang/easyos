@@ -2,9 +2,9 @@
 .text 
 .align 2
 .extern current
-.global mxos_start
-/* void mxos_start(void) */
-mxos_start:
+.global mico_os_start
+/* void mico_os_start(void) */
+mico_os_start:
 	ldr	r0,	=current
 	ldr	r0,	[r0]
 	ldr	sp, 	[r0, #0]		/* tsp */
@@ -14,8 +14,8 @@ mxos_start:
 	msr	cpsr,	r0			/* cpsr */
 	ldmfd	sp!,	{r0-r12, lr, pc}	/* r0-r12, lr, pc */
 
-.global mxos_switch
-mxos_switch:
+.global mico_os_ctx_switch
+mico_os_ctx_switch:
 	stmfd	sp!, {lr}
 	stmfd	sp!, {r0-r12, lr}
 	mrs 	r0, cpsr
@@ -26,7 +26,7 @@ mxos_switch:
 	ldr	r0, [r0]
 	str	sp, [r0]
 
-	bl	mxos_find_next
+	bl	mico_os_find_next
 
 	ldr	r0, =current
 	ldr	r0, [r0]

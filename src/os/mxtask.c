@@ -1,31 +1,29 @@
 #include <easyos.h>
 
-extern void mxos_start(void);
+struct task *current = NULL;
 
-
-
-
-char *strncpy(char *dest, const char *src, size_t n)
+void mico_os_find_next(void)
 {
-	size_t i;
-
-	for (i = 0; i < n && src[i] != '\0'; i++)
-	   dest[i] = src[i];
-	for ( ; i < n; i++)
-	   dest[i] = '\0';
-
-	return dest;
+	current = current->next;
 }
 
-void memset(void *base, char type, uint32_t size)
+void mico_os_set_current(struct task *taskobj)
 {
-	uint32_t i = 0;
-	for (i = 0; i < size; i++) {
-		((char *)base)[i] = type;
-	}
+	uint32_t flags = irq_lock_save();
+	current = taskobj;
+	irq_unlock_restore(flags);
 }
 
-int mx_task_init(struct task *taskobj, void (*entry_func)(void *), 
+struct task *mico_os_get_current(void)
+{
+	struct task *tsk = NULL;
+	uint32_t flags = irq_lock_save();
+	tsk = current;
+	irq_unlock_restore(flags);
+	return tsk;
+}
+
+int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *), 
 	void *args, void *stkbase, uint32_t stksz, const char *name)
 {
 	uint32_t *pstp = NULL;
@@ -35,10 +33,6 @@ int mx_task_init(struct task *taskobj, void (*entry_func)(void *),
 	stktop -= sizeof(ulong);
 	memset(taskobj, 0, sizeof(*taskobj));
 	memset(stkbase, 0, stksz);
-
-	printk("stkbase = 0x%x \n", stkbase);
-	printk("stktop_x = 0x%x \n", (ulong)stkbase + stksz);
-	printk("stktop_y = 0x%x \n", stktop);
 
 	strncpy(taskobj->name, name, TASK_NAME_SIZE);
 	taskobj->stack_base = stkbase;
@@ -70,43 +64,4 @@ int mx_task_init(struct task *taskobj, void (*entry_func)(void *),
 	return 0;
 }
 
-struct task demo_thread, hello_thread;
-static uint32_t demo_stack[128];
-static uint32_t hello_stack[128];
-struct task *current = &demo_thread;
 
-void mxos_switch(void);
-
-void mxos_find_next(void)
-{
-	current=current->next;
-}
-
-void demo_thread_func(void *args)
-{
-	uint32_t flags = 0;
-	uint32_t data = (uint32_t)args;
-
-	while (1) {
-		printk("%s with 0x%x \n", current->name, data);
-		flags = irq_lock_save();
-		mxos_switch();
-		irq_unlock_restore(flags);
-	}
-}
-
-void demo_thread_app(void)
-{
-	mx_task_init(&demo_thread, demo_thread_func, (void *)0x1234, 
-		demo_stack, 128 * sizeof(uint32_t), "demo");
-
-	mx_task_init(&hello_thread, demo_thread_func, (void *)0x5678, 
-		hello_stack, 128 * sizeof(uint32_t), "hello");
-
-	demo_thread.next = &hello_thread;
-	hello_thread.next = &demo_thread;
-
-	bsp_timer_app_init();
-
-	mxos_start();
-}

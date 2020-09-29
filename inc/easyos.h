@@ -2,10 +2,6 @@
 #ifndef __EASY_READ_WRITE_H__
 #define __EASY_READ_WRITE_H__
 
-
-#define SYSTEM_HAS_OS		(0)
-
-
 /*
 * context-relate-type-two: {R0-R12,LR,PC,CPSR,SPSR}
 */
@@ -96,6 +92,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <utils.h>
 
 #define __USED		__attribute__((used))
 #define __UNUSED	__attribute__((unused))
@@ -174,9 +171,16 @@ struct task {
 	struct task *next;
 };
 
-int mx_task_init(struct task *taskobj,
+int mico_os_task_init(struct task *taskobj,
 	void (*entry_func)(void *args), void *args, void *stkbase, 
 	uint32_t stksz, const char *name);
+
+void mico_os_find_next(void);
+void mico_os_set_current(struct task *taskobj);
+
+struct task *mico_os_get_current(void);
+void mico_os_start(void);
+void mico_os_ctx_switch(void);
 
 #endif
 
