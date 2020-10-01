@@ -35,5 +35,4 @@ mico_os_ctx_switch:
 	msr	spsr, r0
 	ldmfd	sp!,{r0}
 	msr	cpsr, r0
-	ldmfd	sp!,{r0-r12, lr}
-	ldmfd	sp!,{pc}
+	ldmfd	sp!,{r0-r12, lr, pc}

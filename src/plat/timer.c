@@ -34,9 +34,9 @@ void bsp_timer_init(uint32_t index)
 	writel((sys_tm[index].base + TVALUE), 0xFFFFFFFF);
 	writel((sys_tm[index].base + TRIS), 0);
 	writel((sys_tm[index].base + TMIS), 0);
-	writel((sys_tm[index].base + TLOAD), 0x1000);			/* load value */
+	writel((sys_tm[index].base + TLOAD), 0x4000);			/* load value */
 	writel((sys_tm[index].base + TCNTL), TIMER_DEBUG_VAL);
-	writel((sys_tm[index].base + TBGLOAD), 0x1000);			/* autoload value */
+	writel((sys_tm[index].base + TBGLOAD), 0x4000);			/* autoload value */
 }
 
 void bsp_timer_start(uint32_t index)

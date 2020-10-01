@@ -30,7 +30,6 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	ulong stktop = (ulong)stkbase + stksz;
 
 	stktop = ALIGN_DOWN(stktop, sizeof(ulong));
-	stktop -= sizeof(ulong);
 	memset(taskobj, 0, sizeof(*taskobj));
 	memset(stkbase, 0, stksz);
 
@@ -41,23 +40,23 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->args = args;
 
 	pstp = (uint32_t *)stktop;
-	*pstp-- = (uint32_t)entry_func;		/* pc */
-	*pstp-- = (uint32_t)entry_func; 	/* lr */
-	*pstp-- = 0x12121212;			/* r12 */
-	*pstp-- = 0x11111111;			/* r11 */
-	*pstp-- = 0x10101010;			/* r10 */
-	*pstp-- = 0x99999999;			/* r09 */
-	*pstp-- = 0x88888888;			/* r08 */
-	*pstp-- = 0x77777777;			/* r07 */
-	*pstp-- = 0x66666666;			/* r06 */
-	*pstp-- = 0x55555555;			/* r05 */
-	*pstp-- = 0x44444444;			/* r04 */
-	*pstp-- = 0x33333333;			/* r03 */
-	*pstp-- = 0x22222222;			/* r02 */
-	*pstp-- = 0x11111111;			/* r01 */
-	*pstp-- = (uint32_t)args;		/* r00 */
-	*pstp-- = SVC_MODE;			/* cpsr: svc mode with interrupt enable */
-	*pstp	= SVC_MODE;			/* spsr: svc mode with interrupt enable */
+	*(--pstp) = (uint32_t)entry_func;		/* pc */
+	*(--pstp) = (uint32_t)entry_func; 	/* lr */
+	*(--pstp) = 0x12121212;			/* r12 */
+	*(--pstp) = 0x11111111;			/* r11 */
+	*(--pstp) = 0x10101010;			/* r10 */
+	*(--pstp) = 0x99999999;			/* r09 */
+	*(--pstp) = 0x88888888;			/* r08 */
+	*(--pstp) = 0x77777777;			/* r07 */
+	*(--pstp) = 0x66666666;			/* r06 */
+	*(--pstp) = 0x55555555;			/* r05 */
+	*(--pstp) = 0x44444444;			/* r04 */
+	*(--pstp) = 0x33333333;			/* r03 */
+	*(--pstp) = 0x22222222;			/* r02 */
+	*(--pstp) = 0x11111111;			/* r01 */
+	*(--pstp) = (uint32_t)args;		/* r00 */
+	*(--pstp) = SVC_MODE;			/* cpsr: svc mode with interrupt enable */
+	*(--pstp) = SVC_MODE;			/* spsr: svc mode with interrupt enable */
 
 	taskobj->tsp = pstp;			/* save full down stack pointer */
 
