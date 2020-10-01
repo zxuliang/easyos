@@ -2,27 +2,6 @@
 
 struct task *current = NULL;
 
-void mico_os_find_next(void)
-{
-	current = current->next;
-}
-
-void mico_os_set_current(struct task *taskobj)
-{
-	uint32_t flags = irq_lock_save();
-	current = taskobj;
-	irq_unlock_restore(flags);
-}
-
-struct task *mico_os_get_current(void)
-{
-	struct task *tsk = NULL;
-	uint32_t flags = irq_lock_save();
-	tsk = current;
-	irq_unlock_restore(flags);
-	return tsk;
-}
-
 int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *), 
 	void *args, void *stkbase, uint32_t stksz, const char *name)
 {
@@ -38,9 +17,12 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->stack_size = stktop - (ulong)stkbase;
 	taskobj->entry = entry_func;
 	taskobj->args = args;
+	taskobj->next = current;
+	current = taskobj;
 
+	/* filled with full-down-stack-style, stmfd sp!,{xxxx} */
 	pstp = (uint32_t *)stktop;
-	*(--pstp) = (uint32_t)entry_func;		/* pc */
+	*(--pstp) = (uint32_t)entry_func;	/* pc */
 	*(--pstp) = (uint32_t)entry_func; 	/* lr */
 	*(--pstp) = 0x12121212;			/* r12 */
 	*(--pstp) = 0x11111111;			/* r11 */
@@ -63,4 +45,24 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	return 0;
 }
 
+void mico_os_find_next(void)
+{
+	current = current->next;
+}
+
+void mico_os_set_current(struct task *taskobj)
+{
+	uint32_t flags = irq_lock_save();
+	current = taskobj;
+	irq_unlock_restore(flags);
+}
+
+struct task *mico_os_get_current(void)
+{
+	struct task *tsk = NULL;
+	uint32_t flags = irq_lock_save();
+	tsk = current;
+	irq_unlock_restore(flags);
+	return tsk;
+}
 

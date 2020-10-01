@@ -14,7 +14,9 @@ mico_os_start:
 	msr	cpsr,	r0			/* cpsr */
 	ldmfd	sp!,	{r0-r12, lr, pc}	/* r0-r12, lr, pc */
 
+.align 2
 .global mico_os_ctx_switch
+/* void mico_os_ctx_switch(void) */
 mico_os_ctx_switch:
 	stmfd	sp!, {lr}
 	stmfd	sp!, {r0-r12, lr}

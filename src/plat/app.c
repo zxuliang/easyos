@@ -1,41 +1,52 @@
 #include <easyos.h>
 
-struct task demo_thread, hello_thread;
-static uint32_t demo_stack[128];
+struct task demo;
+struct task hello;
+
 static uint32_t hello_stack[128];
+static uint32_t demo_stack[128];
 
-
-void demo_thread_func(void *args)
+void thread_func(void *args)
 {
 	uint32_t flags = 0;
 	uint32_t data = (uint32_t)args;
 
+	(void)flags;
+
 	while (1) {
-		printk("%s with 0x%x \n", mico_os_get_current()->name, data);
+		data++;
+		printk(" %s with 0x%x \n", current->name, data);
+
+#ifndef MICO_OS_INTRPT_CTX_SWITCH
 		flags = irq_lock_save();
 		mico_os_ctx_switch();
-		irq_unlock_restore(flags);
+		irq_unlock_restore(flags);	
+#else
+	
+#endif
+
+		
 	}
 }
 
-void demo_thread_app(void)
+void app_main(void)
 {
-	mico_os_task_init(&demo_thread, demo_thread_func, (void *)0x1234, 
+	mico_os_task_init(&demo, thread_func, (void *)0x1234,
 		demo_stack, 128 * sizeof(uint32_t), "demo");
 
-	mico_os_task_init(&hello_thread, demo_thread_func, (void *)0x5678, 
+	mico_os_task_init(&hello, thread_func, (void *)0x5678,
 		hello_stack, 128 * sizeof(uint32_t), "hello");
 
-	demo_thread.next = &hello_thread;
-	hello_thread.next = &demo_thread;
+	demo.next = &hello;
+	hello.next =&demo;
 
-	bsp_timer_app_init();
+	bsp_apptimer_init();
 
 	mico_os_start();
 }
 
 int main(void)
 {
-	bsp_timer_app_init();
+	app_main();
 	return 0;
 }

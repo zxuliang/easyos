@@ -14,7 +14,7 @@ reset_handler:
 	msr	cpsr, #(IRQ_MODE|NO_INTRPT_MASK)
 	ldr	sp, =irq_stack_top
 	msr	cpsr, #SVC_MODE
-	bl	demo_thread_app	
+	bl	main
 	b .
 
 .global relocate_vectors
