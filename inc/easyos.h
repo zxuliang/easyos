@@ -123,6 +123,16 @@ struct irq_manager_st {
 extern void request_irq(uint32_t irq, uint32_t type,
 	irq_handler_t handler, void *data, const char *name);
 
+
+/*-------------------------------------------------------*/
+struct completion {
+	struct list_head evtwq;
+	uint32_t done;
+};
+void init_completion(struct completion *eventobj);
+void wait_for_completion(struct completion *eventobj);
+void complete_all(struct completion *eventobj);
+void complete(struct completion *eventobj);
 /*-------------------------------------------------------*/
 
 #define TASK_NAME_SIZE (15)
@@ -134,9 +144,16 @@ struct task {
 	char name[TASK_NAME_SIZE + 1];
 	void (*entry)(void *args);
 	struct task *next;
+	uint32_t event_data;
+	struct list_head tsknode;
 };
 
 extern struct task *current;
+extern struct task *nextrdy;
+
+extern struct list_head task_rdy_queue;
+extern struct list_head task_wait_queue;
+
 int mico_os_task_init(struct task *taskobj,
 	void (*entry_func)(void *args), void *args, void *stkbase, 
 	uint32_t stksz, const char *name);
@@ -146,6 +163,7 @@ void mico_os_set_current(struct task *taskobj);
 struct task *mico_os_get_current(void);
 
 void mico_os_start(void);
+void mico_os_intrpt_switch(void); /* next switch is at interrupt done */
 void mico_os_ctx_switch(void);	/* inner used with irq disabled. not called in isr */
 /*-------------------------------------------------------*/
 

@@ -1,6 +1,10 @@
 #include <easyos.h>
 
 struct task *current = NULL;
+struct task *nextrdy = NULL;
+
+LIST_HEAD(task_rdy_queue);
+LIST_HEAD(task_wait_queue);
 
 int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *), 
 	void *args, void *stkbase, uint32_t stksz, const char *name)
@@ -17,9 +21,12 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->stack_size = stktop - (ulong)stkbase;
 	taskobj->entry = entry_func;
 	taskobj->args = args;
+	taskobj->event_data = 0;
 	taskobj->next = current;
 	current = taskobj;
-
+	INIT_LIST_HEAD(&taskobj->tsknode);
+	list_add(&taskobj->tsknode, &task_rdy_queue);
+	
 	/* filled with full-down-stack-style, stmfd sp!,{xxxx} */
 	pstp = (uint32_t *)stktop;
 	*(--pstp) = (uint32_t)entry_func;	/* pc */
@@ -45,11 +52,6 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	return 0;
 }
 
-void mico_os_find_next(void)
-{
-	current = current->next;
-}
-
 void mico_os_set_current(struct task *taskobj)
 {
 	uint32_t flags = irq_lock_save();
@@ -66,3 +68,27 @@ struct task *mico_os_get_current(void)
 	return tsk;
 }
 
+void mico_os_intrpt_switch(void)
+{
+	uint32_t flags = irq_lock_save();
+	intrpt_context_switch = 1;
+	irq_unlock_restore(flags);
+}
+
+void mico_os_schedule(void)
+{
+	uint32_t flags = irq_lock_save();
+	mico_os_ctx_switch();
+	irq_unlock_restore(flags);
+}
+
+void mico_os_find_next(void)
+{
+#if 0
+	nextrdy = list_first_entry(&task_rdy_queue, struct task, tsknode);
+	current = nextrdy;
+#else
+	list_move_tail(&current->tsknode, &task_rdy_queue);
+	current = list_first_entry(&task_rdy_queue, struct task, tsknode);
+#endif
+}

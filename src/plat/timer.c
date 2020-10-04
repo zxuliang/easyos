@@ -57,9 +57,6 @@ void timer_irq_handler(void *data)
 	struct hwtimer *ptmr = data;
 	system_systick++;
 	writel((sys_tm[ptmr->index].base + TINTCLR), 0xFFFFFFFF);
-	if ((system_systick % 10) == 0) {
-		intrpt_context_switch = 1;
-	}
 }
 
 void bsp_apptimer_init(void)
