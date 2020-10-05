@@ -123,7 +123,10 @@ struct irq_manager_st {
 extern void request_irq(uint32_t irq, uint32_t type,
 	irq_handler_t handler, void *data, const char *name);
 
-
+extern uint32_t intrpt_nest_counter;
+extern uint32_t system_systick;
+extern uint32_t intrpt_context_switch;
+extern uint32_t schedule_lock_counter;
 /*-------------------------------------------------------*/
 struct completion {
 	struct list_head evtwq;
@@ -144,7 +147,6 @@ struct task {
 	char name[TASK_NAME_SIZE + 1];
 	void (*entry)(void *args);
 	struct task *next;
-	uint32_t event_data;
 	struct list_head tsknode;
 };
 
@@ -163,8 +165,12 @@ void mico_os_set_current(struct task *taskobj);
 struct task *mico_os_get_current(void);
 
 void mico_os_start(void);
-void mico_os_intrpt_switch(void); /* next switch is at interrupt done */
-void mico_os_ctx_switch(void);	/* inner used with irq disabled. not called in isr */
+void mico_os_schedule(void);
+
+/* inner-used: next switch is at interrupt done */
+void mico_os_intrpt_switch(void); 
+/* inner used: with irq disabled */
+void mico_os_ctx_switch(void);
 /*-------------------------------------------------------*/
 
 #endif

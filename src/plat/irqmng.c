@@ -1,5 +1,8 @@
 #include <easyos.h>
 
+uint32_t intrpt_context_switch = 0;
+uint32_t intrpt_nest_counter = 0;
+
 static struct irq_manager_st irq_manager[NR_IRQ + 1];
 
 void vic_irq_disable(uint32_t irq)
@@ -27,8 +30,7 @@ void do_irq_handle_ops(void)
 	unsigned int i = 0;
 	unsigned int vic_status = readl(VIC_BASE + VIC_IRQ_STATUS);
 
-	printk("do_irq_handler \n");
-
+	intrpt_nest_counter++;
 	for (i = 0; i < NR_IRQ; i++) {
 		if (vic_status & (1 << i)) {
 			if (irq_manager[i].handler) {
@@ -36,5 +38,10 @@ void do_irq_handle_ops(void)
 			}
 			writel((VIC_BASE + VIC_VECT_ADDR_EOI), 0);
 		}
+	}
+	
+	intrpt_nest_counter--;
+	if (intrpt_nest_counter == 0) {
+		intrpt_context_switch = 1;
 	}
 }

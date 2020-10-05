@@ -1,7 +1,6 @@
 #include <easyos.h>
 
 uint32_t system_systick = 0;
-uint32_t intrpt_context_switch = 0;
 
 struct hwtimer
 {

@@ -19,7 +19,6 @@ void one_thread_func(void *args)
 	(void)flags;
 	while (1) {
 		wait_for_completion(&eventcmpt);
-		wait_for_completion(&eventcmpt);
 		data++;
 		printk(" TASK[%s] with 0x%x \n", current->name, data);
 	}
@@ -35,7 +34,6 @@ void two_thread_func(void *args)
 	while (1) {
 		data++;
 		printk(" TASK[%s] with 0x%x \n", current->name, data);	
-		mico_os_intrpt_switch();
 	}
 }
 
@@ -50,7 +48,6 @@ void three_thread_func(void *args)
 		data++;
 		printk(" TASK[%s] with 0x%x \n", current->name, data);
 		complete(&eventcmpt);
-		mico_os_intrpt_switch();
 	}
 }
 

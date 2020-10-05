@@ -24,14 +24,16 @@ void wait_for_completion(struct completion *eventobj)
 void complete(struct completion *eventobj)
 {
 	uint32_t flags;
+	
 	flags = irq_lock_save();
 	eventobj->done++;
-
 	if (list_empty(&eventobj->evtwq)) {
-		/* nothing */
+		/* do nothing */
 	} else {
+		/* only move one task to ready queue */
 		list_move_tail(eventobj->evtwq.next, &task_rdy_queue);
 	}
+	eventobj->done--;
 	irq_unlock_restore(flags);
 }
 
@@ -43,8 +45,15 @@ void complete_all(struct completion *eventobj)
 	
 	flags = irq_lock_save();
 	eventobj->done = 0xFFFF0000;
-	list_for_each_safe(pos, n, &eventobj->evtwq) {
-		list_move_tail(pos, &task_rdy_queue);
+
+	if (list_empty(&eventobj->evtwq)) {
+		/* do nothing */
+	} else {
+		/* move all task to ready queue */
+		list_for_each_safe(pos, n, &eventobj->evtwq) {
+			list_move_tail(pos, &task_rdy_queue);
+		}
 	}
+	eventobj->done = 0;
 	irq_unlock_restore(flags);
 }

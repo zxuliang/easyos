@@ -6,6 +6,8 @@ struct task *nextrdy = NULL;
 LIST_HEAD(task_rdy_queue);
 LIST_HEAD(task_wait_queue);
 
+uint32_t schedule_lock_counter = 0;
+
 int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *), 
 	void *args, void *stkbase, uint32_t stksz, const char *name)
 {
@@ -21,7 +23,6 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->stack_size = stktop - (ulong)stkbase;
 	taskobj->entry = entry_func;
 	taskobj->args = args;
-	taskobj->event_data = 0;
 	taskobj->next = current;
 	current = taskobj;
 	INIT_LIST_HEAD(&taskobj->tsknode);
@@ -82,13 +83,16 @@ void mico_os_schedule(void)
 	irq_unlock_restore(flags);
 }
 
+void mico_os_schedule_lock(void)
+{
+	uint32_t flags = irq_lock_save();
+	schedule_lock_counter++;
+	irq_unlock_restore(flags);
+}
+
+/* schedule by fifo or priority if need */
 void mico_os_find_next(void)
 {
-#if 0
-	nextrdy = list_first_entry(&task_rdy_queue, struct task, tsknode);
-	current = nextrdy;
-#else
 	list_move_tail(&current->tsknode, &task_rdy_queue);
 	current = list_first_entry(&task_rdy_queue, struct task, tsknode);
-#endif
 }
