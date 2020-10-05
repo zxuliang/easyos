@@ -127,6 +127,16 @@ extern uint32_t intrpt_nest_counter;
 extern uint32_t system_systick;
 extern uint32_t intrpt_context_switch;
 extern uint32_t schedule_lock_counter;
+
+/*-------------------------------------------------------*/
+struct event {
+	struct list_head evtwq;
+	uint32_t data;
+	uint32_t mask;	/* data.bitx must be set */
+};
+extern void init_event(struct event *eventobj, uint32_t mask);
+extern void wait_event(struct event *eventobj);
+extern void wakeup_event(struct event *eventobj, uint32_t dmask);
 /*-------------------------------------------------------*/
 struct completion {
 	struct list_head evtwq;
@@ -137,14 +147,21 @@ void wait_for_completion(struct completion *eventobj);
 void complete_all(struct completion *eventobj);
 void complete(struct completion *eventobj);
 /*-------------------------------------------------------*/
-
+#define TASK_MAX_PRI	(31)
 #define TASK_NAME_SIZE (15)
+
+#define TASK_STATE_BLOCK (0xFF)
+#define TASK_STATE_READY (0xEE)
+
 struct task {
 	void *tsp;
 	void *args;
 	void *stack_base;
 	uint32_t stack_size;
 	char name[TASK_NAME_SIZE + 1];
+	int pri;
+	uint32_t evtmsk;
+	uint32_t status;
 	void (*entry)(void *args);
 	struct task *next;
 	struct list_head tsknode;
@@ -157,7 +174,7 @@ extern struct list_head task_rdy_queue;
 extern struct list_head task_wait_queue;
 
 int mico_os_task_init(struct task *taskobj,
-	void (*entry_func)(void *args), void *args, void *stkbase, 
+	void (*entry_func)(void *args), void *args, uint32_t flags, void *stkbase, 
 	uint32_t stksz, const char *name);
 
 void mico_os_find_next(void);

@@ -2,6 +2,8 @@
 
 struct task *current = NULL;
 struct task *nextrdy = NULL;
+struct task *gtask = NULL;
+
 
 LIST_HEAD(task_rdy_queue);
 LIST_HEAD(task_wait_queue);
@@ -9,7 +11,7 @@ LIST_HEAD(task_wait_queue);
 uint32_t schedule_lock_counter = 0;
 
 int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *), 
-	void *args, void *stkbase, uint32_t stksz, const char *name)
+	void *args, uint32_t flags, void *stkbase, uint32_t stksz, const char *name)
 {
 	uint32_t *pstp = NULL;
 	ulong stktop = (ulong)stkbase + stksz;
@@ -25,8 +27,9 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->args = args;
 	taskobj->next = current;
 	current = taskobj;
+	gtask = current;
 	INIT_LIST_HEAD(&taskobj->tsknode);
-	list_add(&taskobj->tsknode, &task_rdy_queue);
+	list_add_tail(&taskobj->tsknode, &task_rdy_queue);
 	
 	/* filled with full-down-stack-style, stmfd sp!,{xxxx} */
 	pstp = (uint32_t *)stktop;
