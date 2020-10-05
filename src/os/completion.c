@@ -15,9 +15,11 @@ void wait_for_completion(struct completion *eventobj)
 	flags = irq_lock_save();
 	if (0 == eventobj->done) {
 		list_move_tail(&curt->tsknode, &eventobj->evtwq);
+		curt->status = TASK_STATE_BLOCK;
 		mico_os_ctx_switch();
 	}
 	eventobj->done--;
+	curt->status = TASK_STATE_READY;
 	irq_unlock_restore(flags);
 }
 

@@ -174,8 +174,8 @@ extern struct list_head task_rdy_queue;
 extern struct list_head task_wait_queue;
 
 int mico_os_task_init(struct task *taskobj,
-	void (*entry_func)(void *args), void *args, uint32_t flags, void *stkbase, 
-	uint32_t stksz, const char *name);
+	void (*entry_func)(void *args), void *args, uint32_t flags,
+	void *stkbase, uint32_t stksz, const char *name);
 
 void mico_os_find_next(void);
 void mico_os_set_current(struct task *taskobj);
