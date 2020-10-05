@@ -37,7 +37,6 @@ void wakeup_event(struct event *eventobj, uint32_t dmask)
 {
 	uint32_t flags;
 	uint32_t datax;
-	struct task *tsk;
 	struct list_head *pos, *n;
 
 	flags = irq_lock_save();
@@ -48,7 +47,6 @@ void wakeup_event(struct event *eventobj, uint32_t dmask)
 		} else {
 			list_for_each_safe(pos, n, &eventobj->evtwq) {
 				list_move_tail(pos, &task_rdy_queue);
-				tsk = list_entry(pos, struct task, tsknode);
 			}
 		}
 	}

@@ -83,7 +83,11 @@ void mico_os_intrpt_switch(void)
 void mico_os_schedule(void)
 {
 	uint32_t flags = irq_lock_save();
-	mico_os_ctx_switch();
+	if (intrpt_nest_counter == 0) {
+		mico_os_ctx_switch();
+	} else {
+		mico_os_intrpt_switch();
+	}
 	irq_unlock_restore(flags);
 }
 
