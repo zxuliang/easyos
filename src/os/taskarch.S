@@ -1,18 +1,19 @@
 
-.text 
+.text
 .align 2
 .extern current
 .global mico_os_start
 /* void mico_os_start(void) */
 mico_os_start:
-	ldr	r0,	=current
-	ldr	r0,	[r0]
-	ldr	sp, 	[r0, #0]		/* tsp */
-	ldmfd	sp!,	{r0}
-	msr	spsr,	r0			/* spsr */
-	ldmfd	sp!,	{r0}
-	msr	cpsr,	r0			/* cpsr */
-	ldmfd	sp!,	{r0-r12, lr, pc}	/* r0-r12, lr, pc */
+	bl	mico_os_find_next
+	ldr	r0, =current
+	ldr	r0, [r0]
+	ldr	sp, [r0]
+	ldmfd	sp!,{r0}
+	msr	spsr, r0
+	ldmfd	sp!,{r0}
+	msr	cpsr, r0
+	ldmfd	sp!,{r0-r12, lr, pc}
 
 .align 2
 .global mico_os_ctx_switch

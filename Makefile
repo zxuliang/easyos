@@ -25,6 +25,8 @@ SRCS += $(wildcard src/plat/*.c)
 SRCS += $(wildcard src/os/*.c)
 SRCS += $(wildcard src/os/*.S)
 
+sinclude src/appx/app.mk
+
 #
 # objfiles
 #
@@ -42,7 +44,7 @@ DEPS :=$(OBJS:.o=.d)
 
 TARGET:=out/easyos.elf
 
-.PHONY: all clean run
+.PHONY: all clean run tags
 
 all: $(TARGET)
 	@echo "--------------------------------------------------"
@@ -93,6 +95,8 @@ endif
 #Tell makefile dont't autoremove anything
 .SECONDARY:
 
+tags:
+	@ctags -R .
 clean:
 	@-rm -rf out
 	@echo "Cleaning...done"

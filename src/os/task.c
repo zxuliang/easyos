@@ -1,18 +1,22 @@
 #include <easyos.h>
 
+static volatile u32 yield_flag = 0;
 struct task *current = NULL;
-struct task *nextrdy = NULL;
-struct task *gtask = NULL;
+struct list_head task_rdy_queue[TASK_MAX_PRI];
 
 
-LIST_HEAD(task_rdy_queue);
-LIST_HEAD(task_wait_queue);
+void mico_os_init(void)
+{
+	int i = 0;
 
-uint32_t schedule_lock_counter = 0;
+	for (i = 0; i < TASK_MAX_PRI; i++) {
+		INIT_LIST_HEAD(&task_rdy_queue[i]);
+	}
+}
 
-int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *), 
+int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	void *args, uint32_t flags, void *stkbase, uint32_t stksz,
-	const char *name)
+	const char *name, int prior)
 {
 	uint32_t *pstp = NULL;
 	ulong stktop = (ulong)stkbase + stksz;
@@ -26,12 +30,11 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->stack_size = stktop - (ulong)stkbase;
 	taskobj->entry = entry_func;
 	taskobj->args = args;
-	taskobj->next = current;
-	current = taskobj;
-	gtask = current;
+	taskobj->priority = prior;
+	taskobj->status = TASK_STATE_READY;
 	INIT_LIST_HEAD(&taskobj->tsknode);
-	list_add_tail(&taskobj->tsknode, &task_rdy_queue);
-	
+	list_add_tail(&taskobj->tsknode, &task_rdy_queue[taskobj->priority]);
+
 	/* filled with full-down-stack-style, stmfd sp!,{xxxx} */
 	pstp = (uint32_t *)stktop;
 	*(--pstp) = (uint32_t)entry_func;	/* pc */
@@ -66,8 +69,10 @@ void mico_os_set_current(struct task *taskobj)
 
 struct task *mico_os_get_current(void)
 {
+	uint32_t flags;
 	struct task *tsk = NULL;
-	uint32_t flags = irq_lock_save();
+
+	flags = irq_lock_save();
 	tsk = current;
 	irq_unlock_restore(flags);
 	return tsk;
@@ -82,8 +87,10 @@ void mico_os_intrpt_switch(void)
 
 void mico_os_schedule(void)
 {
-	uint32_t flags = irq_lock_save();
-	if (intrpt_nest_counter == 0) {
+	uint32_t flags = 0;
+
+	flags = irq_lock_save();
+	if (intrpt_nest_counter == 0 && schedule_lock_counter == 0) {
 		mico_os_ctx_switch();
 	} else {
 		mico_os_intrpt_switch();
@@ -98,9 +105,38 @@ void mico_os_schedule_lock(void)
 	irq_unlock_restore(flags);
 }
 
-/* schedule by fifo or priority if need */
+void mico_os_schedule_unlock(void)
+{
+	uint32_t flags = irq_lock_save();
+	if (schedule_lock_counter > 0) {
+		schedule_lock_counter--;
+	}
+	irq_unlock_restore(flags);
+}
+
+void mico_os_yield(void)
+{
+	u32 flag = irq_lock_save();
+	yield_flag = 1;
+	irq_unlock_restore(flag);
+}
+
 void mico_os_find_next(void)
 {
-	list_move_tail(&current->tsknode, &task_rdy_queue);
-	current = list_first_entry(&task_rdy_queue, struct task, tsknode);
+	int i = 0;
+
+	if (yield_flag) {
+		yield_flag = 0;
+		list_move_tail(&current->tsknode, &task_rdy_queue[i]);
+		current = list_first_entry(&task_rdy_queue[i], struct task, tsknode);
+		return;
+	}
+
+	for (i = 0; i < TASK_MAX_PRI; i++) {
+		if (list_empty(&task_rdy_queue[i])) {
+			continue;
+		}
+		current = list_first_entry(&task_rdy_queue[i], struct task, tsknode);
+		break;
+	}
 }

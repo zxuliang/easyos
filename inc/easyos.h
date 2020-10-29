@@ -2,6 +2,13 @@
 #ifndef __EASY_OS_HEADER_H__
 #define __EASY_OS_HEADER_H__
 
+#define TASK_MAX_PRI	(32)
+#define TASK_NAME_SIZE	(15)
+
+#define TASK_STATE_BLOCK (0xFF)
+#define TASK_STATE_READY (0xEE)
+#define TASK_STATE_RUNNING (0xAA)
+
 #define MICO_OS_INTRPT_CTX_SWITCH
 
 /*---------------------------------------------------------*/
@@ -147,35 +154,37 @@ void wait_for_completion(struct completion *eventobj);
 void complete_all(struct completion *eventobj);
 void complete(struct completion *eventobj);
 /*-------------------------------------------------------*/
-#define TASK_MAX_PRI	(31)
-#define TASK_NAME_SIZE (15)
+struct sema {
+	int value;
+	int init_value;
+	uint32_t evtwq_mask;
+	struct list_head evtwq[TASK_MAX_PRI];
+};
 
-#define TASK_STATE_BLOCK (0xFF)
-#define TASK_STATE_READY (0xEE)
+void sem_init(struct sema *sema, int cnt);
+void sem_pend(struct sema *sema);
+void sem_post(struct sema *sema);
 
+/*-------------------------------------------------------*/
 struct task {
 	void *tsp;
 	void *args;
 	void *stack_base;
 	uint32_t stack_size;
 	char name[TASK_NAME_SIZE + 1];
-	int pri;
+	int priority;
 	uint32_t evtmsk;
 	uint32_t status;
 	void (*entry)(void *args);
-	struct task *next;
 	struct list_head tsknode;
 };
 
 extern struct task *current;
-extern struct task *nextrdy;
-
-extern struct list_head task_rdy_queue;
-extern struct list_head task_wait_queue;
+extern struct list_head task_rdy_queue[TASK_MAX_PRI];
 
 int mico_os_task_init(struct task *taskobj,
 	void (*entry_func)(void *args), void *args, uint32_t flags,
-	void *stkbase, uint32_t stksz, const char *name);
+	void *stkbase, uint32_t stksz, const char *name, int prior);
 
 void mico_os_find_next(void);
 void mico_os_set_current(struct task *taskobj);
@@ -184,8 +193,12 @@ struct task *mico_os_get_current(void);
 void mico_os_start(void);
 void mico_os_schedule(void);
 
+/* scheduler lock/unlock */
+void mico_os_schedule_lock(void);
+void mico_os_schedule_unlock(void);
+
 /* inner-used: next switch is at interrupt done */
-void mico_os_intrpt_switch(void); 
+void mico_os_intrpt_switch(void);
 /* inner used: with irq disabled */
 void mico_os_ctx_switch(void);
 /*-------------------------------------------------------*/

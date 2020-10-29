@@ -2,6 +2,7 @@
 
 uint32_t intrpt_context_switch = 0;
 uint32_t intrpt_nest_counter = 0;
+uint32_t schedule_lock_counter = 0;
 
 static struct irq_manager_st irq_manager[NR_IRQ + 1];
 
@@ -39,9 +40,9 @@ void do_irq_handle_ops(void)
 			writel((VIC_BASE + VIC_VECT_ADDR_EOI), 0);
 		}
 	}
-	
+
 	intrpt_nest_counter--;
-	if (intrpt_nest_counter == 0) {
+	if (intrpt_nest_counter == 0 && schedule_lock_counter == 0) {
 		intrpt_context_switch = 1;
 	}
 }

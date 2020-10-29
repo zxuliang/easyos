@@ -6,6 +6,7 @@
 .extern vectors_start
 .extern vectors_end
 .extern demo_thread_app
+.extern mico_os_init
 
 .global reset_handler
 reset_handler:
@@ -14,6 +15,7 @@ reset_handler:
 	msr	cpsr, #(IRQ_MODE|NO_INTRPT_MASK)
 	ldr	sp, =irq_stack_top
 	msr	cpsr, #SVC_MODE
+	bl	mico_os_init
 	bl	main
 	b .
 
