@@ -19,15 +19,18 @@ void sem_pend(struct sema *sema)
 	struct task *ptask = NULL;
 
 	flags = irq_lock_save();
-	ptask = mico_os_get_current();
 
-	prio = ptask->priority;
 	if (--sema->value < 0) {
+		ptask = mico_os_get_current();
+		prio = ptask->priority;
+
 		list_move_tail(&ptask->tsknode, &sema->evtwq[prio]);
+		task_rdyq_test_clr(ptask->priority);
 		ptask->status = TASK_STATE_BLOCK;
-		sema->evtwq_mask |= (1 << ptask->priority);
+		setbitsl(&sema->evtwq_mask, BIT_MASK(ptask->priority));
+
 		irq_unlock_restore(flags);
-		mico_os_schedule();	/* giveup cpu to let other task run */
+		mico_os_schedule();
 	} else {
 		irq_unlock_restore(flags);
 	}
@@ -36,7 +39,6 @@ void sem_pend(struct sema *sema)
 void sem_post(struct sema *sema)
 {
 	uint32_t i = 0;
-	uint32_t mask = 0;
 	uint32_t flags = 0;
 	struct task *ptask = NULL;
 
@@ -48,27 +50,27 @@ void sem_post(struct sema *sema)
 	}
 
 	/* some one wait on this semaphore */
-	if (sema->value <= 0 || sema->evtwq_mask) {
-		for (i = 0; i < TASK_MAX_PRI; i++) {
-			mask = 1 << i;
-			if (!(mask & sema->evtwq_mask)) {
-				continue;
-			}
+	if (sema->evtwq_mask) {
 
-			ptask = list_first_entry(&sema->evtwq[i], struct task, tsknode);
-			ptask->status = TASK_STATE_READY;
-			list_move_tail(&ptask->tsknode, &task_rdy_queue[ptask->priority]);
-			if (list_empty(&sema->evtwq[i])) {
-				sema->evtwq_mask &= ~mask;
-			}
+		i = __builtin_ctz(sema->evtwq_mask);
+		ptask = list_first_entry(&sema->evtwq[i], struct task, tsknode);
+		ptask->status = TASK_STATE_READY;
+		task_rdyq_set_mask(ptask->priority);
+		list_move_tail(&ptask->tsknode, &task_rdy_queue[ptask->priority]);
 
-			/* giveup cpu to high pri task */
-			if (current->priority > ptask->priority) {
-				irq_unlock_restore(flags);
-				mico_os_schedule();
-				return;
-			}
+		if (list_empty(&sema->evtwq[i])) {
+			clrbitsl(sema->evtwq_mask, BIT_MASK(ptask->priority));
 		}
+
+		if (current->priority > ptask->priority) {
+			irq_unlock_restore(flags);
+			mico_os_schedule();
+		} else {
+			irq_unlock_restore(flags);
+			mico_os_yield();
+		}
+
+		return;
 	}
 
 	irq_unlock_restore(flags);

@@ -1,2 +1,2 @@
 SRCS += $(wildcard src/appx/appmain.c)
-SRCS += $(wildcard src/appx/appx.c)
+SRCS += $(wildcard src/appx/apptask.c)

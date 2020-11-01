@@ -17,9 +17,9 @@ void bsp_timer_init(void)
 	writel((systmr.base + TVALUE), 0xFFFFFFFF);
 	writel((systmr.base + TRIS), 0);
 	writel((systmr.base + TMIS), 0);
-	writel((systmr.base + TLOAD), 0x8000);		/* load value */
+	writel((systmr.base + TLOAD), 0xF000);		/* load value */
 	writel((systmr.base + TCNTL), TIMER_DEBUG_VAL);
-	writel((systmr.base + TBGLOAD), 0x8000);	/* autoload value */
+	writel((systmr.base + TBGLOAD), 0xF000);	/* autoload value */
 }
 
 void bsp_timer_start(void)

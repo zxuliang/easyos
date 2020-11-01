@@ -235,10 +235,17 @@ loop:
 	return count;
 }
 
+
 void printk(const char *fmt, ...)
 {
 	va_list va;
+	unsigned int flag;
+
+	flag = irq_lock_save();
+
 	va_start(va, fmt);
 	vprintfx(fmt, va);
 	va_end(va);
+
+	irq_unlock_restore(flag);
 }

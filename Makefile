@@ -98,5 +98,5 @@ endif
 tags:
 	@ctags -R .
 clean:
-	@-rm -rf out
+	@-rm -rf out tags
 	@echo "Cleaning...done"

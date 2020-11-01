@@ -1,16 +1,35 @@
 #include <easyos.h>
 
-static volatile u32 yield_flag = 0;
-struct task *current = NULL;
+static u32 task_rdy_qmask = 0;
 struct list_head task_rdy_queue[TASK_MAX_PRI];
 
+struct task *current = NULL;
+static volatile u32 yield_flag = 0;
 
 void mico_os_init(void)
 {
 	int i = 0;
 
+	task_rdy_qmask = 0;
 	for (i = 0; i < TASK_MAX_PRI; i++) {
 		INIT_LIST_HEAD(&task_rdy_queue[i]);
+	}
+}
+
+void task_rdyq_set_mask(uint32_t pri)
+{
+	setbitsl(&task_rdy_qmask, BIT_MASK(pri));
+}
+
+void task_rdyq_clr_mask(uint32_t pri)
+{
+	clrbitsl(&task_rdy_qmask, BIT_MASK(pri));
+}
+
+void task_rdyq_test_clr(uint32_t pri)
+{
+	if (list_empty(&task_rdy_queue[pri])) {
+		clrbitsl(&task_rdy_qmask, BIT_MASK(pri));
 	}
 }
 
@@ -34,6 +53,7 @@ int mico_os_task_init(struct task *taskobj, void (*entry_func)(void *),
 	taskobj->status = TASK_STATE_READY;
 	INIT_LIST_HEAD(&taskobj->tsknode);
 	list_add_tail(&taskobj->tsknode, &task_rdy_queue[taskobj->priority]);
+	setbitsl(&task_rdy_qmask, BIT_MASK(taskobj->priority));
 
 	/* filled with full-down-stack-style, stmfd sp!,{xxxx} */
 	pstp = (uint32_t *)stktop;
@@ -119,11 +139,12 @@ void mico_os_yield(void)
 	u32 flag = irq_lock_save();
 	yield_flag = 1;
 	irq_unlock_restore(flag);
+	mico_os_schedule();
 }
 
 void mico_os_find_next(void)
 {
-	int i = 0;
+	uint32_t i = 0;
 
 	if (yield_flag) {
 		yield_flag = 0;
@@ -132,11 +153,6 @@ void mico_os_find_next(void)
 		return;
 	}
 
-	for (i = 0; i < TASK_MAX_PRI; i++) {
-		if (list_empty(&task_rdy_queue[i])) {
-			continue;
-		}
-		current = list_first_entry(&task_rdy_queue[i], struct task, tsknode);
-		break;
-	}
+	i = __builtin_ctz(task_rdy_qmask);
+	current = list_first_entry(&task_rdy_queue[i], struct task, tsknode);
 }

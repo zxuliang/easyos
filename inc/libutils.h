@@ -7,6 +7,17 @@
 #include <stdint.h>
 #include <stddef.h>
 
+
+/*-------------------------------------------------------------*/
+uint32_t __builtin_clz(uint32_t x);	/* x ! = 0 */
+uint32_t __builtin_ctz(uint32_t x);	/* x ! = 0 */
+uint32_t __builtin_popcount(uint32_t x);
+uint16_t __builtin_bswap16(uint16_t x);
+uint32_t __builtin_bswap32(uint32_t x);
+uint32_t __builtin_ffs(uint32_t x);
+/*-------------------------------------------------------------*/
+
+/*-------------------------------------------------------------*/
 #define __USED		__attribute__((used))
 #define __UNUSED	__attribute__((unused))
 #define __SECTION(x)	__attribute__((section(x)))
@@ -19,6 +30,7 @@
 #define container_of(ptr, type, member)		\
 	(type *)((char *)ptr - (char *)&(((type *)0)->member))
 
+/*-------------------------------------------------------------*/
 typedef int32_t		s32;
 typedef int16_t		s16;
 typedef int8_t		s8;
@@ -26,6 +38,7 @@ typedef uint32_t	u32;
 typedef uint16_t	u16;
 typedef uint8_t		u8;
 typedef unsigned long ulong;
+/*-------------------------------------------------------------*/
 
 #define __raw_writeb(v, a)	(*(volatile unsigned char *)(unsigned long)(a) = (v))
 #define __raw_writew(v, a)	(*(volatile unsigned short *)(unsigned long)(a) = (v))
@@ -50,9 +63,14 @@ typedef unsigned long ulong;
 #define setbitsl(p, mask)	writel((p),(readl(p) | (mask)))
 #define clrbitsl(p, mask)	writel((p),(readl(p) & ~(mask)))
 
+/*-------------------------------------------------------------*/
+
 #define isdigit(c)	((unsigned)((c) - '0') < 10)
 #define TOLOWER(x)	((x) | 0x20)
-#define isxdigit(c)	(('0' <= (c) && (c) <= '9') || ('a' <= (c) && (c) <= 'f') || ('A' <= (c) && (c) <= 'F'))
+#define isxdigit(c)	(('0' <= (c) && (c) <= '9') || \
+			('a' <= (c) && (c) <= 'f') || ('A' <= (c) && (c) <= 'F'))
+
+/*-------------------------------------------------------------*/
 
 char *strncpy(char *dest, const char *src, size_t n);
 char *strstr(const char *s1, const char *s2);
@@ -62,16 +80,21 @@ int strcmp(const char *cs, const char *ct);
 size_t strnlen(const char *s, uint32_t maxlen);
 size_t strlen(const char *s);
 
+/*-------------------------------------------------------------*/
+
 void memset(void *base, char type, uint32_t size);
 int memcmp(const void *cs, const void *ct, uint32_t count);
 void *memmove(void *dest, const void *src, uint32_t n);
 void *memcpy(void *dst, const void *src, uint32_t count);
 
+/*-------------------------------------------------------------*/
+
 int atoi(const char *nptr);
 unsigned long strtoul(const char *cp,char **endp,unsigned int base);
 long strtol(const char *cp, char **endp, unsigned int base);
 
-/*------------------list------------------------*/
+/*-------------------------------------------------------------*/
+
 struct list_head
 {
 	struct list_head *prev;

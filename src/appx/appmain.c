@@ -42,5 +42,6 @@ int main(void)
 {
 	app_init();
 	app_main();
+
 	return 0;
 }

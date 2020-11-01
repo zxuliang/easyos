@@ -92,6 +92,11 @@
 #define UART3_BASE 		(0x10009000)
 
 /*---------------------------------------------------------*/
+
+#define BIT_MASK(x)		(1 << (x))
+
+/*---------------------------------------------------------*/
+
 #ifndef __ASM__
 
 #include <libutils.h>
@@ -100,8 +105,8 @@ extern void printk(const char *fmt, ...);
 
 /*--------------------------------------------------------*/
 extern void arch_wfi_idle(void);
-
 /*---------------------------------------------------------*/
+
 extern void irq_enable(void);
 extern void irq_disable(void);
 extern uint32_t irq_lock_save(void);
@@ -118,6 +123,12 @@ extern uint32_t system_systick;
 extern uint32_t intrpt_context_switch;
 
 /*--------------------------------------------------------*/
+
+/*---------------------------------------------------------*/
+
+/*---------------------------------------------------------*/
+
+
 
 typedef void (*irq_handler_t)(void *);
 struct irq_manager_st {
@@ -192,6 +203,7 @@ struct task *mico_os_get_current(void);
 
 void mico_os_start(void);
 void mico_os_schedule(void);
+void mico_os_yield(void);
 
 /* scheduler lock/unlock */
 void mico_os_schedule_lock(void);
@@ -201,6 +213,11 @@ void mico_os_schedule_unlock(void);
 void mico_os_intrpt_switch(void);
 /* inner used: with irq disabled */
 void mico_os_ctx_switch(void);
+
+void task_rdyq_set_mask(uint32_t pri);
+void task_rdyq_clr_mask(uint32_t pri);
+void task_rdyq_test_clr(uint32_t pri);
+
 /*-------------------------------------------------------*/
 
 #endif
