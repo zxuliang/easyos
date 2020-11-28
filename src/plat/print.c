@@ -1,4 +1,4 @@
-#include <easyos.h>
+#include <easyplat.h>
 
 
 char uart_getc(const unsigned long regbase)

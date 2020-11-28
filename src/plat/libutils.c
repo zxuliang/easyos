@@ -1,4 +1,4 @@
-#include <easyos.h>
+#include <easyplat.h>
 
 char *strncpy(char *dest, const char *src, size_t n)
 {

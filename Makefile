@@ -24,8 +24,7 @@ SRCS := $(wildcard src/plat/*.S)
 SRCS += $(wildcard src/plat/*.c)
 SRCS += $(wildcard src/os/*.c)
 SRCS += $(wildcard src/os/*.S)
-
-sinclude src/appx/app.mk
+SRCS += $(wildcard src/appx/*.c)
 
 #
 # objfiles
@@ -57,7 +56,7 @@ debug: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@echo ""
-	@echo "CC -Wl,--start-group ${OBJS} -Wl,--end-group $(LDFLAGS) -o $@"
+	@echo "CC -Wl,--start-group $(OBJS) -Wl,--end-group $(LDFLAGS) -o $@"
 	@$(CC) -Wl,--start-group $(OBJS) -Wl,--end-group $(LDFLAGS) -o $@
 	@$(OBJCOPY) --gap-fill=0xff -O binary -j.text -j.data -S $@ $(subst .elf,.bin,$@)
 	@$(OBJCOPY) --gap-fill=0xff -O ihex -j.text -j.data -S $@ $(subst .elf,.hex,$@)

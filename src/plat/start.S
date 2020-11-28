@@ -1,12 +1,8 @@
-#include <easyos.h>
+#include <easyplat.h>
 
 .text
 .align 2
 
-.extern vectors_start
-.extern vectors_end
-.extern demo_thread_app
-.extern mico_os_init
 
 .global reset_handler
 reset_handler:
@@ -15,7 +11,7 @@ reset_handler:
 	msr	cpsr, #(IRQ_MODE|NO_INTRPT_MASK)
 	ldr	sp, =irq_stack_top
 	msr	cpsr, #SVC_MODE
-	bl	mico_os_init
+	bl	bsp_bss_clear
 	bl	main
 	b .
 
@@ -30,3 +26,25 @@ copy_loop:
 		cmp r0, r1
 		ble copy_loop
 		bx lr
+
+/*---------------------isr-vector---------------------------*/
+.global vectors_start, vectors_end
+vectors_start:
+	ldr pc, reset_handler_addr
+	ldr pc, undef_handler_addr
+	ldr pc, swi_handler_addr
+	ldr pc, prefetch_abort_handler_addr
+	ldr pc, data_abort_handler_addr
+	b .
+	ldr pc, irq_handler_addr
+	ldr pc, fiq_handler_addr
+
+	reset_handler_addr		: .word reset_handler
+	undef_handler_addr		: .word OS_CPU_ARM_ExceptUndefInstrHndlr
+	swi_handler_addr		: .word OS_CPU_ARM_ExceptSwiHndlr
+	prefetch_abort_handler_addr	: .word OS_CPU_ARM_ExceptPrefetchAbortHndlr
+	data_abort_handler_addr		: .word OS_CPU_ARM_ExceptDataAbortHndlr
+	irq_handler_addr		: .word OS_CPU_ARM_ExceptIrqHndlr
+	fiq_handler_addr		: .word OS_CPU_ARM_ExceptFiqHndlr
+vectors_end:
+

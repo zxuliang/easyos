@@ -1,4 +1,4 @@
-#include <easyos.h>
+#include <easyplat.h>
 
 uint32_t system_systick = 0;
 
@@ -36,6 +36,7 @@ void timer_irq_handler(void *data)
 {
 	struct hwtimer *ptmr = data;
 	system_systick++;
+	OSTimeTick();
 	writel((ptmr->base + TINTCLR), 0xFFFFFFFF);
 }
 

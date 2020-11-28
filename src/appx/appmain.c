@@ -1,47 +1,91 @@
-#include <easyos.h>
+#include <easyplat.h>
 
-struct task demox_thread;
-struct task demoy_thread;
-struct task demoz_thread;
-struct task idle_thread;
+#define APP_HELLO_PRIO 10
+#define APP_LINUX_PRIO 11
 
-static uint32_t demox_stack[128];
-static uint32_t demoy_stack[128];
-static uint32_t demoz_stack[128];
-static uint32_t idle_stack[128];
+#define OS_CFG_TASK_STK_SIZE	(256)
+#define  OS_CFG_TASK_STK_LIMIT      \
+		((OS_CFG_TASK_STK_SIZE  * OS_CFG_TASK_STK_LIMIT_PCT_EMPTY) / 100u)
 
-void app_init(void);
-void demox_thread_func(void *args);
-void demoy_thread_func(void *args);
-void demoz_thread_func(void *args);
-void demoz_thread_idle(void *args);
+static OS_TCB helloTCB;
+static OS_TCB linuxTCB;
 
-void app_main(void)
+static CPU_STK bufhello[OS_CFG_TASK_STK_SIZE];
+static CPU_STK buflinux[OS_CFG_TASK_STK_SIZE];
+
+static OS_SEM semtalk;
+
+void task_funcx(void *data)
 {
-	memset(&demox_thread, 0, sizeof(demox_thread));
-	memset(&demoy_thread, 0, sizeof(demoy_thread));
-	memset(&demoz_thread, 0, sizeof(demoz_thread));
+	OS_ERR err;
+	char *name = data;
 
-	mico_os_task_init(&demox_thread, demox_thread_func, (void *)0x11110000,0,
-		demox_stack, 128 * sizeof(uint32_t), "demox", 1);
+	while (1) {
+		printk("This is task %s +++++\n", name);
+		OSSemPend(&semtalk, 0, OS_OPT_PEND_BLOCKING, NULL, &err);
+	}
+}
 
-	mico_os_task_init(&demoy_thread, demoy_thread_func, (void *)0x22220000,0,
-		demoy_stack, 128 * sizeof(uint32_t), "demoy", 2);
+void task_funcy(void *data)
+{
+	OS_ERR err;
+	char *name = data;
 
-	mico_os_task_init(&demoz_thread, demoz_thread_func, (void *)0x33330000,0,
-		demoz_stack, 128 * sizeof(uint32_t), "demoz", 3);
+	bsp_apptimer_init();
+	while (1) {
+		printk("This is task %s \n", name);
+		OSSemPost(&semtalk, OS_OPT_POST_1, &err);
+	}
+}
 
+void bsp_bss_clear(void)
+{
+	extern unsigned int __bss_start__[];
+	extern unsigned int __bss_end__[];
+	unsigned int *ptr = __bss_start__;
 
-	mico_os_task_init(&idle_thread, demoz_thread_idle, (void *)0x00000000,0,
-		idle_stack, 128 * sizeof(uint32_t), "idle", 31);
-
-	mico_os_start();
+	while (ptr < __bss_end__) {
+		*ptr = 0;
+		ptr++;
+	}
 }
 
 int main(void)
 {
-	app_init();
-	app_main();
+	OS_ERR err;
+
+	OSInit(&err);
+
+	OSSemCreate(&semtalk, "talk", 1, &err);
+
+	OSTaskCreate(&helloTCB,
+			"hello",
+			task_funcx, (void *)"hello",
+			APP_HELLO_PRIO,
+			(CPU_STK *)bufhello,
+			OS_CFG_TASK_STK_LIMIT,
+			OS_CFG_TASK_STK_SIZE,
+			0,
+			2,
+			NULL,
+			(OS_OPT_TASK_STK_CHK | (OS_OPT)(OS_OPT_TASK_STK_CLR | OS_OPT_TASK_NO_TLS)),
+			&err);
+
+	OSTaskCreate(&linuxTCB,
+		"linux",
+		task_funcy,
+		(void *)"linux",
+		APP_LINUX_PRIO,
+		(CPU_STK *)buflinux,
+		OS_CFG_TASK_STK_LIMIT,
+		OS_CFG_TASK_STK_SIZE,
+		0,
+		4,
+		NULL,
+		(OS_OPT_TASK_STK_CHK | (OS_OPT)(OS_OPT_TASK_STK_CLR | OS_OPT_TASK_NO_TLS)),
+		&err);
+
+	OSStart(&err);
 
 	return 0;
 }

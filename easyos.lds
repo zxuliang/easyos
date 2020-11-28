@@ -8,7 +8,12 @@ SECTIONS
 	. = 0x10000;
 	.text : { *(.text) }
 	.data : { *(.data) }
+	. = ALIGN(8);
+
+	__bss_start__ = .;
 	.bss : { *(.bss) }
+	. = ALIGN(8);
+	__bss_end__ = .;
 
 	. = ALIGN(8);
 	. = . + 0x1000; 			/* 4kB of SVC stack space */
